@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="good_weather">
+        <item>clear</item>
+        <item>mostlysunny</item>
+        <item>partlysunny</item>
+        <item>sunny</item>
+        <item>cloudy</item>
+        <item>partlycloudy</item>
+        <item>fog</item>
+        <item>hazy</item>
+        <item>mostlycloudy</item>
+    </string-array>
+
+    <string-array name="bad_weather">
+        <item>flurries</item>
+        <item>snow</item>
+        <item>chancesnow</item>
+        <item>chanceflurries</item>
+        <item>sleet</item>
+        <item>chancesleet</item>
+        <item>rain</item>
+        <item>chancerain</item>
+        <item>tstorms</item>
+        <item>chancetstorms</item>
+    </string-array>
+
+</resources>

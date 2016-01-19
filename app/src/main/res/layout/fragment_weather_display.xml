@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:paddingTop="64dp"
+    android:paddingBottom="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <View android:id="@+id/weather_transparent"
+        android:layout_alignParentBottom="true"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/transparent"/>
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/weather_small_recycler"
+        android:layout_above="@id/weather_transparent"
+        app:layoutManager="LinearLayoutManager"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="144dp"
+        tools:listitem="@layout/fragment_weather_item"/>
+
+    <RelativeLayout android:id="@+id/weather_main_layout"
+        android:layout_above="@id/weather_small_recycler"
+        android:layout_centerHorizontal="true"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent">
+
+        <TextView android:id="@+id/weather_temperature_text"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16sp"
+            android:textSize="16sp"
+            tools:text="31\u2103 / 88\u2109" />
+
+        <TextView android:id="@+id/weather_condition_text"
+            android:layout_above="@id/weather_temperature_text"
+            android:layout_centerHorizontal="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            tools:text="Thunderstorm"/>
+
+        <TextView android:id="@+id/weather_city_text"
+            android:layout_above="@id/weather_condition_text"
+            android:layout_centerHorizontal="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            tools:text="Singapore, Singapore"/>
+
+        <ImageView android:id="@+id/weather_icon_image"
+            android:layout_above="@id/weather_city_text"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scaleType="centerInside"
+            tools:src="@drawable/very_cloudy_2x"/>
+
+    </RelativeLayout>
+
+    <ProgressBar android:id="@+id/loading_wheel"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_above="@id/weather_small_recycler"
+        android:layout_centerInParent="true"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"/>
+
+</RelativeLayout>

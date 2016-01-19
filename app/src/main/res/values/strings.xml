@@ -1,0 +1,54 @@
+<resources>
+    <string name="app_name">OddleAssignment</string>
+    
+    <!-- shared preference key -->
+    <string name="preference_save_file">preference_save_file</string>
+    <string name="preference_has_city_bool">preference_has_city_bool</string>
+    <string name="preference_city_count_int">preference_city_count_int</string>
+    <string name="preference_condition_string">preference_condition_string</string>
+    <string name="preference_celsius_int">preference_celsius_int</string>
+    <string name="preference_fahrenheit_int">preference_fahrenheit_int</string>
+    <string name="preference_hour_int">preference_hour_int</string>
+    <string name="preference_icon_string">preference_icon_string</string>
+    
+    <!-- intent key -->
+    <string name="intent_launched_by_activity_bool">intent_launched_by_activity_bool</string>
+    <string name="intent_add_new_city_string">intent_add_new_city_string</string>
+    <string name="intent_add_new_state_string">intent_add_new_state_string</string>
+    <string name="intent_intentservice_request_result_int">intent_intentservice_request_result_int</string>
+    <string name="intent_autocomplete_param_string">intent_autocomplete_param_string</string>
+    <string name="intent_city_query_param_string">intent_city_query_param_string</string>
+    <string name="intent_state_query_param_string">intent_state_query_param_string</string>
+    <string name="intent_action_broadcast_autocomplete_string">intent_action_broadcast_autocomplete_string</string>
+    <string name="intent_action_broadcast_weather_string">intent_action_broadcast_weather_string</string>
+    <string name="intent_action_broadcast_batch_string">intent_action_broadcast_batch_string</string>
+    <string name="intent_action_autocomplete_string">intent_action_autocomplete_string</string>
+    <string name="intent_action_hourly_string">intent_action_hourly_string</string>
+    <string name="intent_action_batch_string">intent_action_batch_string</string>
+    <string name="intent_result_autocomplete_stringarray">intent_result_autocomplete_stringarray</string>
+    <string name="intent_result_hour_int">intent_result_hour_int</string>
+    <string name="intent_result_celsius_int">intent_result_celsius_int</string>
+    <string name="intent_result_fahrenheit_int">intent_result_fahrenheit_int</string>
+    <string name="intent_result_condition_string">intent_result_condition_string</string>
+    <string name="intent_result_icon_string">intent_result_icon_string</string>
+
+    <!-- arguments key -->
+    <string name="arg_add_new_city_string">arg_add_new_city_string</string>
+    <string name="arg_add_new_state_string">arg_add_new_state_string</string>
+
+    <!-- bundle key -->
+    <string name="bundle_main_weather_index_int">bundle_main_weather_index_int</string>
+    <string name="bundle_main_city_string">bundle_main_city_string</string>
+    <string name="bundle_main_state_string">bundle_main_state_string</string>
+    <string name="bundle_main_condition_string">bundle_main_condition_string</string>
+    <string name="bundle_main_celsius_int">bundle_main_celsius_int</string>
+    <string name="bundle_main_fahrenheit_int">bundle_main_fahrenheit_int</string>
+    <string name="bundle_main_hour_int">bundle_main_hour_int</string>
+    <string name="bundle_main_icon_string">bundle_main_icon_string</string>
+
+    <!-- UI strings -->
+    <string name="temperature_format">"%1$d\u2103 / %2$d\u2109"</string>
+    <string name="already_added">%1$s is already added</string>
+
+    <string name="title_activity_weather_display">WeatherDisplay</string>
+</resources>

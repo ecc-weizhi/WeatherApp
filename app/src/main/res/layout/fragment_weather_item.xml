@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:paddingLeft="8dp"
+    android:layout_marginRight="8dp"
+    android:layout_width="96dp"
+    android:layout_height="144dp">
+
+    <ImageView
+        android:id="@+id/weather_small_icon_image"
+        android:layout_width="88dp"
+        android:layout_height="96dp"
+        android:adjustViewBounds="true"
+        android:scaleType="centerInside"
+        tools:src="@drawable/very_cloudy_1x"/>
+
+    <TextView
+        android:id="@+id/weather_small_city_text"
+        android:layout_width="88dp"
+        android:layout_height="24dp"
+        android:textSize="14sp"
+        android:gravity="center_horizontal"
+        android:ellipsize="end"
+        android:singleLine="true"
+        tools:text="Singapore, Singapore" />
+
+    <TextView
+        android:id="@+id/weather_small_condition_text"
+        android:layout_width="88dp"
+        android:layout_height="24dp"
+        android:textSize="14sp"
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:gravity="center_horizontal"
+        tools:text="Thunderstorm"/>
+
+</LinearLayout>
