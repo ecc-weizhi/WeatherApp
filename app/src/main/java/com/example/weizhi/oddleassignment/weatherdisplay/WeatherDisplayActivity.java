@@ -23,8 +23,9 @@ import com.example.weizhi.oddleassignment.citysearch.CitySearchActivity;
  * @author Lin Weizhi (ecc.weizhi@gmail.com)
  */
 public class WeatherDisplayActivity extends AppCompatActivity implements WeatherDisplayFragment.FragmentActivityInterface {
-    private static final String TAG = "'WeatherDisplayActivity";
-    public static final int ADD_CITY_REQUEST_CODE = 1;
+    private static final String TAG = "WeatherDisplayActivity";
+    private static final boolean DEBUG = false;
+    private static final int ADD_CITY_REQUEST_CODE = 1;
 
     private WeatherDisplayFragment mFragment;
 
@@ -37,6 +38,8 @@ public class WeatherDisplayActivity extends AppCompatActivity implements Weather
         Intent intent = getIntent();
         String city = intent.getStringExtra(getString(R.string.intent_add_new_city_string));
         String state = intent.getStringExtra(getString(R.string.intent_add_new_state_string));
+
+        if(DEBUG) Log.d(TAG, "onCreate with intent: "+city+", "+state);
 
         if(city == null){
             // Add fragment with no arguments
@@ -64,14 +67,13 @@ public class WeatherDisplayActivity extends AppCompatActivity implements Weather
             if(resultCode == RESULT_OK){
                 String city = data.getStringExtra(getString(R.string.intent_add_new_city_string));
                 String state = data.getStringExtra(getString(R.string.intent_add_new_state_string));
+                if(DEBUG) Log.d(TAG, "onActivityResult: "+city+", "+state);
                 mFragment.addCity(city, state);
             }
+            else{
+                if(DEBUG) Log.d(TAG, "onActivityResult: canceled");
+            }
         }
-    }
-
-    @Override
-    protected void onStart(){
-        super.onStart();
     }
 
     @Override
@@ -95,6 +97,7 @@ public class WeatherDisplayActivity extends AppCompatActivity implements Weather
             PendingIntent pi = PendingIntent.getService(this, 1, intent, PendingIntent.FLAG_CANCEL_CURRENT);
             alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() +
                     5000, AlarmManager.INTERVAL_HALF_HOUR, pi);
+            if(DEBUG) Log.d(TAG, "Start alarm for the first time");
         }
     }
 }

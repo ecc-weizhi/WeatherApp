@@ -1,17 +1,12 @@
 package com.example.weizhi.oddleassignment.citysearch;
 
 import android.support.v7.widget.RecyclerView;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Filter;
-import android.widget.Filterable;
 import android.widget.TextView;
 
 import com.example.weizhi.oddleassignment.R;
-import com.example.weizhi.oddleassignment.network.WundergroundAPICallManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,8 +18,7 @@ import java.util.List;
  *
  * @author Lin Weizhi (ecc.weizhi@gmail.com)
  */
-public class CitySearchRecyclerViewAdapter extends RecyclerView.Adapter<CitySearchRecyclerViewAdapter.ViewHolder>
-        implements Filterable, TextWatcher {
+public class CitySearchRecyclerViewAdapter extends RecyclerView.Adapter<CitySearchRecyclerViewAdapter.ViewHolder> {
     private final String TAG = "CityRecyclerViewAdapter";
 
     private List<String> citySuggestionList;
@@ -65,39 +59,9 @@ public class CitySearchRecyclerViewAdapter extends RecyclerView.Adapter<CitySear
         return citySuggestionList.size();
     }
 
-    @Override
-    public Filter getFilter() {
-        Filter myFilter = new Filter() {
-            @Override
-            protected FilterResults performFiltering(CharSequence constraint) {
-                FilterResults filterResults = new FilterResults();
-                if(constraint != null && constraint.length()>=2) {
-                    citySuggestionList = WundergroundAPICallManager.requestAutoComplete(constraint.toString());
-
-                    // Now assign the values and count to the FilterResults object
-                    filterResults.values = citySuggestionList;
-                    filterResults.count = citySuggestionList.size();
-                }
-                return filterResults;
-            }
-
-            @Override
-            protected void publishResults(CharSequence contraint, FilterResults results) {
-                notifyDataSetChanged();
-            }
-        };
-        return myFilter;
-    }
-
-    @Override
-    public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-    @Override
-    public void onTextChanged(CharSequence s, int start, int before, int count) {}
-
-    @Override
-    public void afterTextChanged(Editable s) {
-        getFilter().filter(s.toString());
+    public void setList(List<String> newList){
+        this.citySuggestionList = newList;
+        notifyDataSetChanged();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {

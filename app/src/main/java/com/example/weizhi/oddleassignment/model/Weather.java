@@ -13,12 +13,12 @@ public class Weather {
     public int tempFahrenheit;
     public int hour;
     public String icon;
-    public boolean shouldUpdate;
+    //public boolean shouldUpdate;
 
     public Weather(String cityName, String stateName){
         this.cityName = cityName;
         this.stateName = stateName;
-        shouldUpdate = true;
+        //shouldUpdate = true;
     }
 
     public Weather(String cityName, String stateName, String condition, int tempCelsius,
@@ -30,7 +30,17 @@ public class Weather {
         this.tempFahrenheit = tempFahrenheit;
         this.hour = hour;
         this.icon = icon;
-        shouldUpdate = false;
+        //shouldUpdate = false;
+    }
+
+    public void update(String condition, int tempCelsius,
+                   int tempFahrenheit, int hour, String icon){
+        this.condition = condition;
+        this.tempCelsius = tempCelsius;
+        this.tempFahrenheit = tempFahrenheit;
+        this.hour = hour;
+        this.icon = icon;
+        //shouldUpdate = false;
     }
 
     public String toKey(){

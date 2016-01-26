@@ -23,7 +23,12 @@ import android.widget.Toast;
 
 import com.example.weizhi.oddleassignment.R;
 import com.example.weizhi.oddleassignment.background.CheckWeatherIntentService;
+import com.example.weizhi.oddleassignment.background.MySpiceService;
 import com.example.weizhi.oddleassignment.model.Weather;
+import com.example.weizhi.oddleassignment.network.HourlyApiRequest;
+import com.octo.android.robospice.SpiceManager;
+import com.octo.android.robospice.persistence.exception.SpiceException;
+import com.octo.android.robospice.request.listener.RequestListener;
 
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -36,12 +41,13 @@ import java.util.Hashtable;
  */
 public class WeatherDisplayFragment extends Fragment implements WeatherRecyclerViewAdapter.RecyclerFragmentInterface,
         View.OnLongClickListener {
-    private final String TAG = "'WeatherDisplayFragment";
+    private final String TAG = "WeatherDisplayFragment";
+    private static final boolean DEBUG = true;
+    private final int THIRTY_MINUTES = 1000*60*30;
 
     private Weather mainWeather;
     private Hashtable<String, Weather> weatherTable;    // The source of info
     private ArrayList<Weather> weatherList;             // An ArrayList backed by weatherTable.
-    private int mainWeatherIndex = -1;
     private WeatherRecyclerViewAdapter mWeatherRecyclerViewAdapter;
 
     private FragmentActivityInterface mActivity;
@@ -54,6 +60,9 @@ public class WeatherDisplayFragment extends Fragment implements WeatherRecyclerV
     private ResponseReceiver mResponseReceiver;
     private RecyclerView mRecyclerView;
     private ProgressBar mProgressBar;
+
+    private final SpiceManager spiceManager = new SpiceManager(MySpiceService.class);
+    private final HourlyRequestListener mHourlyRequestListener = new HourlyRequestListener();
 
     private RelativeLayout getmMainWeatherLayout(){
         if(mMainWeatherLayout == null)
@@ -142,7 +151,6 @@ public class WeatherDisplayFragment extends Fragment implements WeatherRecyclerV
                         saveFile.getInt(str+getString(R.string.preference_fahrenheit_int), 0),
                         saveFile.getInt(str+getString(R.string.preference_hour_int), 0),
                         saveFile.getString(str+getString(R.string.preference_icon_string), ""));
-                w.shouldUpdate = true;
                 weatherTable.put(w.toKey(), w);
             }
         }
@@ -171,32 +179,44 @@ public class WeatherDisplayFragment extends Fragment implements WeatherRecyclerV
 
             if(city != null){
                 if(weatherTable.containsKey(city+", "+state)){
-                    mainWeatherIndex = 0;
-                    mainWeather = weatherList.get(mainWeatherIndex);
+                    mainWeather = weatherList.get(0);
+                    if(DEBUG) {
+                        Log.d(TAG, "onCreate. We don't have savedInstanceState, have argument to " +
+                                "add city but city is already added. Most likely android kill this" +
+                                "fragment. City size: "
+                                +weatherTable.size() +". Main weather: "+mainWeather.toKey());
+                    }
                 }
                 else {
                     // We found city in arguments. Set argument city as mainWeather
                     mainWeather = new Weather(city, state);
-                    mainWeatherIndex = weatherTable.size();
                     weatherTable.put(mainWeather.toKey(), mainWeather);
-                    weatherList.add(mainWeather);
+                    weatherList.add(0, mainWeather);
+
+                    if(DEBUG) {
+                        Log.d(TAG, "onCreate. Launched from CitySearchActivity with city size: "
+                                +weatherTable.size() +". Add Main weather: "+mainWeather.toKey());
+                    }
                 }
             }
             else{
-                mainWeatherIndex = 0;
-                mainWeather = weatherList.get(mainWeatherIndex);
+                mainWeather = weatherList.get(0);
+                if(DEBUG) {
+                    Log.d(TAG, "onCreate. Launched from home with city size: "
+                            +weatherTable.size() +". Main weather: "+mainWeather.toKey());
+                }
             }
         }
         else{
             // We have savedInstanceState. This is a re-creation of fragment. Initialize mainWeather
             // using savedInstanceState.
-
-            mainWeatherIndex = 0;
-            mainWeather = weatherList.get(mainWeatherIndex);
+            mainWeather = weatherList.get(0);
+            if(DEBUG) Log.d(TAG, "onCreate. Recreate fragment. City size: "+weatherTable.size()+
+                    ". Main weather: "+mainWeather.toKey());
         }
 
         // remove mainWeather from weatherList
-        weatherList.remove(mainWeatherIndex);
+        weatherList.remove(0);
         mWeatherRecyclerViewAdapter = new WeatherRecyclerViewAdapter(this, weatherList);
     }
 
@@ -226,7 +246,7 @@ public class WeatherDisplayFragment extends Fragment implements WeatherRecyclerV
     @Override
     public void onStart(){
         super.onStart();
-
+        spiceManager.start(getActivity());
         updateMainWeather();
     }
 
@@ -234,22 +254,24 @@ public class WeatherDisplayFragment extends Fragment implements WeatherRecyclerV
     public void onResume(){
         super.onResume();
 
-        // The filter's action is BROADCAST_ACTION
         IntentFilter mIntentFilter = new IntentFilter();
-        mIntentFilter.addAction(getString(R.string.intent_action_broadcast_weather_string));
+        //mIntentFilter.addAction(getString(R.string.intent_action_broadcast_weather_string));
         mIntentFilter.addAction(getString(R.string.intent_action_broadcast_batch_string));
-        // Registers the DownloadStateReceiver and its intent filters
         LocalBroadcastManager.getInstance(getActivity()).registerReceiver(getmResponseReceiver(), mIntentFilter);
         getmRecyclerView().setAdapter(mWeatherRecyclerViewAdapter);
 
-        CheckWeatherIntentService.startCheckWeather(getActivity(), mainWeather.stateName, mainWeather.cityName);
+        HourlyApiRequest request = new HourlyApiRequest(mainWeather.cityName, mainWeather.stateName);
+        spiceManager.getFromCacheAndLoadFromNetworkIfExpired(request, request.createCacheKey(),
+                THIRTY_MINUTES, mHourlyRequestListener);
+
         getmMainWeatherLayout().setVisibility(View.INVISIBLE);
         getmProgressBar().setVisibility(View.VISIBLE);
         getmMainWeatherLayout().setOnLongClickListener(this);
 
         for(Weather w: weatherList){
-            if (w.shouldUpdate)
-                CheckWeatherIntentService.startCheckWeather(getActivity(), w.stateName, w.cityName);
+            request = new HourlyApiRequest(w.cityName, w.stateName);
+            spiceManager.getFromCacheAndLoadFromNetworkIfExpired(request, request.createCacheKey(),
+                    THIRTY_MINUTES, mHourlyRequestListener);
         }
     }
 
@@ -287,26 +309,24 @@ public class WeatherDisplayFragment extends Fragment implements WeatherRecyclerV
     }
 
     @Override
-    public void onItemSelected(Weather item, int position) {
-        if(position < mainWeatherIndex){
-            weatherList.add(mainWeatherIndex, mainWeather);
-            mWeatherRecyclerViewAdapter.notifyItemInserted(mainWeatherIndex);
-            mainWeatherIndex = position;
-            mainWeather = weatherList.get(mainWeatherIndex);
-            weatherList.remove(mainWeatherIndex);
-            mWeatherRecyclerViewAdapter.notifyItemRemoved(mainWeatherIndex);
-        }
-        else{
-            weatherList.remove(position);
-            mWeatherRecyclerViewAdapter.notifyItemRemoved(position);
-            weatherList.add(mainWeatherIndex, mainWeather);
-            mWeatherRecyclerViewAdapter.notifyItemInserted(mainWeatherIndex);
-            mainWeatherIndex = position;
-            mainWeather = item;
-        }
+    public void onStop() {
+        spiceManager.shouldStop();
+        super.onStop();
+    }
 
-        //updateMainWeather();
-        CheckWeatherIntentService.startCheckWeather(getActivity(), mainWeather.stateName, mainWeather.cityName);
+    @Override
+    public void onItemSelected(Weather item, int position) {
+        if(DEBUG) Log.d(TAG, "Selected: "+item.toKey()+" at position: "+position);
+        weatherList.remove(position);
+        mWeatherRecyclerViewAdapter.notifyItemRemoved(position);
+        weatherList.add(position, mainWeather);
+        mWeatherRecyclerViewAdapter.notifyItemInserted(position);
+        mainWeather = item;
+
+        HourlyApiRequest request = new HourlyApiRequest(mainWeather.cityName, mainWeather.stateName);
+        spiceManager.getFromCacheAndLoadFromNetworkIfExpired(request, request.createCacheKey(),
+                THIRTY_MINUTES, mHourlyRequestListener);
+
         getmMainWeatherLayout().setVisibility(View.INVISIBLE);
         getmProgressBar().setVisibility(View.VISIBLE);
     }
@@ -319,10 +339,10 @@ public class WeatherDisplayFragment extends Fragment implements WeatherRecyclerV
         }
         else {
             Weather newWeather = new Weather(city, state);
-            weatherList.add(mainWeatherIndex, mainWeather);
-            mWeatherRecyclerViewAdapter.notifyItemInserted(mainWeatherIndex);
+            int addIndex = weatherList.size();
+            weatherList.add(addIndex, mainWeather);
+            mWeatherRecyclerViewAdapter.notifyItemInserted(addIndex);
             weatherTable.put(newWeather.toKey(), newWeather);
-            mainWeatherIndex = weatherList.size();
             mainWeather = newWeather;
         }
     }
@@ -387,6 +407,8 @@ public class WeatherDisplayFragment extends Fragment implements WeatherRecyclerV
                 getActivity().getWindow().getDecorView().setBackgroundColor(getResources().getColor(R.color.blue_900));
             }
         }
+        getmProgressBar().setVisibility(View.GONE);
+        getmMainWeatherLayout().setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -397,14 +419,17 @@ public class WeatherDisplayFragment extends Fragment implements WeatherRecyclerV
                     .setMessage(mainWeather.toKey())
                     .setPositiveButton("Remove", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
+                            if(DEBUG) Log.d(TAG, "Remove "+mainWeather.toKey());
                             // Do stuff
                             weatherTable.remove(mainWeather.toKey());
-                            mainWeatherIndex = 0;
-                            mainWeather = weatherList.get(mainWeatherIndex);
-                            weatherList.remove(mainWeatherIndex);
-                            mWeatherRecyclerViewAdapter.notifyItemRemoved(mainWeatherIndex);
-                            //updateMainWeather();
-                            CheckWeatherIntentService.startCheckWeather(getActivity(), mainWeather.stateName,mainWeather.cityName);
+                            int removeIndex = weatherList.size()-1;
+                            mainWeather = weatherList.get(removeIndex);
+                            if(DEBUG) Log.d(TAG, "Next main weather: "+ mainWeather.toKey());
+                            weatherList.remove(removeIndex);
+                            mWeatherRecyclerViewAdapter.notifyItemRemoved(removeIndex);
+                            HourlyApiRequest request = new HourlyApiRequest(mainWeather.cityName, mainWeather.stateName);
+                            spiceManager.getFromCacheAndLoadFromNetworkIfExpired(request, request.createCacheKey(),
+                                    THIRTY_MINUTES, mHourlyRequestListener);
                         }
                     })
                     .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -433,6 +458,8 @@ public class WeatherDisplayFragment extends Fragment implements WeatherRecyclerV
                 int resultCode = intent.getIntExtra(getString(R.string.intent_intentservice_request_result_int), 0);
                 switch(resultCode){
                     case CheckWeatherIntentService.REQUEST_SUCCESS:
+                        if(DEBUG) Log.d(TAG, "Received batch update success message");
+
                         SharedPreferences saveFile = mActivity.getSharedPreferences(getString(R.string.preference_save_file),
                                 Context.MODE_PRIVATE);
                         int count = saveFile.getInt(getString(R.string.preference_city_count_int), 0);
@@ -445,17 +472,14 @@ public class WeatherDisplayFragment extends Fragment implements WeatherRecyclerV
                         // to get the updated info.
                         for(String key : keyList){
                             Weather w = weatherTable.get(key);
-                            w.condition = saveFile.getString(key+getString(R.string.preference_condition_string), "");
+                            w.condition = saveFile.getString(key + getString(R.string.preference_condition_string), "");
                             w.tempCelsius = saveFile.getInt(key+getString(R.string.preference_celsius_int), 0);
                             w.tempFahrenheit = saveFile.getInt(key + getString(R.string.preference_fahrenheit_int), 0);
                             w.hour = saveFile.getInt(key + getString(R.string.preference_hour_int), 0);
                             w.icon = saveFile.getString(key+getString(R.string.preference_icon_string), "");
-                            w.shouldUpdate = false;
                         }
 
                         updateMainWeather();
-                        getmMainWeatherLayout().setVisibility(View.VISIBLE);
-                        getmProgressBar().setVisibility(View.INVISIBLE);
                         mWeatherRecyclerViewAdapter.notifyDataSetChanged();
 
                         break;
@@ -467,39 +491,29 @@ public class WeatherDisplayFragment extends Fragment implements WeatherRecyclerV
                         Log.e(TAG, "Received unknwon result code for batch result broadcast.");
                 }
             }
-            else if(intent.getAction().equals(getString(R.string.intent_action_broadcast_weather_string))){
-                int resultCode = intent.getIntExtra(getString(R.string.intent_intentservice_request_result_int), 0);
-                switch(resultCode){
-                    case CheckWeatherIntentService.REQUEST_SUCCESS:
-                        String key = intent.getStringExtra(getString(R.string.intent_city_query_param_string))+", "+
-                                intent.getStringExtra(getString(R.string.intent_state_query_param_string));
-                        Weather mWeather = weatherTable.get(key);
-                        if(mWeather!=null){
-                            mWeather.condition = intent.getStringExtra(getString(R.string.intent_result_condition_string));
-                            mWeather.tempCelsius = intent.getIntExtra(getString(R.string.intent_result_celsius_int), 0);
-                            mWeather.tempFahrenheit = intent.getIntExtra(getString(R.string.intent_result_fahrenheit_int), 0);
-                            mWeather.hour = intent.getIntExtra(getString(R.string.intent_result_hour_int), 0);
-                            mWeather.icon = intent.getStringExtra(getString(R.string.intent_result_icon_string));
-                            mWeather.shouldUpdate = false;
-                        }
+        }
+    }
 
-                        mWeatherRecyclerViewAdapter.notifyDataSetChanged();
-                        if(key.equals(mainWeather.toKey())){
-                            updateMainWeather();
-                            getmMainWeatherLayout().setVisibility(View.VISIBLE);
-                            getmProgressBar().setVisibility(View.INVISIBLE);
-                        }
-                        Log.i(TAG, "Received weather info for "+mWeather.toKey());
-                        break;
-                    case CheckWeatherIntentService.REQUEST_FAIL_NO_NETWORK:
-                        Toast toast = Toast.makeText(getActivity(),"No Connection", Toast.LENGTH_LONG);
-                        toast.show();
-                        break;
-                    case CheckWeatherIntentService.REQUEST_FAIL_UNKNOWN:
-                        Log.e(TAG, "Received Intentservice broadcasted fail message.");
-                        break;
-                    default:
-                        Log.e(TAG, "Received unknown result code from intentservice.");
+    private class HourlyRequestListener implements RequestListener<Weather> {
+
+        @Override
+        public void onRequestFailure(SpiceException e) {
+
+        }
+
+        @Override
+        public void onRequestSuccess(Weather result) {
+            Log.d(TAG, "Request for " + result.toKey() + " succeeded");
+            Weather oldWeather = weatherTable.get(result.toKey());
+            oldWeather.update(result.condition, result.tempCelsius, result.tempFahrenheit,
+                    result.hour, result.icon);
+            if(result.toKey().equals(mainWeather.toKey())){
+                updateMainWeather();
+            }
+            else{
+                int indexToUpdate = weatherList.indexOf(oldWeather);
+                if(indexToUpdate != -1) {
+                    mWeatherRecyclerViewAdapter.notifyItemChanged(indexToUpdate);
                 }
             }
         }

@@ -15,28 +15,27 @@ import android.util.Log;
 import com.example.weizhi.oddleassignment.R;
 import com.example.weizhi.oddleassignment.citysearch.CitySearchActivity;
 import com.example.weizhi.oddleassignment.model.Weather;
-import com.example.weizhi.oddleassignment.network.WundergroundAPICallManager;
+import com.example.weizhi.oddleassignment.network.HourlyApiRequest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
- * An {@link IntentService} subclass for handling asynchronous task requests in
- * a service on a separate handler thread.
- * <p/>
- * TODO: Customize class - update intent actions, extra parameters and static
- * helper methods.
+ * An IntentService to pull weather information in background.
+ *
+ * @author Lin Weizhi (ecc.weizhi@gmail.com)
  */
 public class CheckWeatherIntentService extends IntentService {
-    private static final String TAG = "'IntentService";
+    private static final String TAG = "IntentService";
+    private static final boolean DEBUG = false;
 
     // Result code for request
     public static final int REQUEST_SUCCESS = 1;
     public static final int REQUEST_FAIL_NO_NETWORK = 2;
     public static final int REQUEST_FAIL_UNKNOWN = 3;
 
-    public final ArrayList<String> goodWeather;
-    public final ArrayList<String> badWeather;
+    private final ArrayList<String> goodWeather;
+    private final ArrayList<String> badWeather;
 
     public CheckWeatherIntentService() {
         super("CheckWeatherIntentService");
@@ -52,90 +51,14 @@ public class CheckWeatherIntentService extends IntentService {
                 new ArrayList<String>(Arrays.asList(badWeatherArray));
     }
 
-    public static void startAutoComplete(Context context, String queryText) {
-        Intent intent = new Intent(context, CheckWeatherIntentService.class);
-        intent.setAction(context.getString(R.string.intent_action_autocomplete_string));
-        intent.putExtra(context.getString(R.string.intent_autocomplete_param_string), queryText);
-        context.startService(intent);
-    }
-
-    public static void startCheckWeather(Context context, String state, String city) {
-        Intent intent = new Intent(context, CheckWeatherIntentService.class);
-        intent.setAction(context.getString(R.string.intent_action_hourly_string));
-        intent.putExtra(context.getString(R.string.intent_state_query_param_string), state);
-        intent.putExtra(context.getString(R.string.intent_city_query_param_string), city);
-        context.startService(intent);
-    }
-
     @Override
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
             final String action = intent.getAction();
 
-            if (action.equals(getString(R.string.intent_action_autocomplete_string))) {
-                final String queryText = intent.getStringExtra(getString(R.string.intent_autocomplete_param_string));
+            if (action.equals(getString(R.string.intent_action_batch_string))) {
+                if(DEBUG) Log.d(TAG, "received batch intent.");
 
-                Intent autoCompleteResultIntent;
-                if(!isOnline()){
-                    // No connection
-                    autoCompleteResultIntent =
-                            new Intent(getString(R.string.intent_action_broadcast_autocomplete_string))
-                                    .putExtra(getString(R.string.intent_intentservice_request_result_int), REQUEST_FAIL_NO_NETWORK)
-                                    .putExtra(getString(R.string.intent_autocomplete_param_string), queryText);
-                }
-                else{
-                    // query server and retrieve a list of cities.
-                    ArrayList<String> mCityList = WundergroundAPICallManager.requestAutoComplete(queryText);
-                    if(mCityList == null)
-                        autoCompleteResultIntent =
-                                new Intent(getString(R.string.intent_action_broadcast_autocomplete_string))
-                                    .putExtra(getString(R.string.intent_intentservice_request_result_int), REQUEST_FAIL_UNKNOWN)
-                                    .putExtra(getString(R.string.intent_autocomplete_param_string), queryText);
-                    else
-                        autoCompleteResultIntent =
-                                new Intent(getString(R.string.intent_action_broadcast_autocomplete_string))
-                                    .putExtra(getString(R.string.intent_intentservice_request_result_int), REQUEST_SUCCESS)
-                                    .putStringArrayListExtra(getString(R.string.intent_result_autocomplete_stringarray), mCityList)
-                                    .putExtra(getString(R.string.intent_autocomplete_param_string), queryText);
-                }
-
-                LocalBroadcastManager.getInstance(this).sendBroadcast(autoCompleteResultIntent);
-            } else if (action.equals(getString(R.string.intent_action_hourly_string))) {
-                final String state = intent.getStringExtra(getString(R.string.intent_state_query_param_string));
-                final String city = intent.getStringExtra(getString(R.string.intent_city_query_param_string));
-
-                Intent weatherResultIntent;
-                if(!isOnline()){
-                    // No connection
-                    weatherResultIntent =
-                            new Intent(getString(R.string.intent_action_broadcast_weather_string))
-                                    .putExtra(getString(R.string.intent_intentservice_request_result_int), REQUEST_FAIL_NO_NETWORK)
-                                    .putExtra(getString(R.string.intent_state_query_param_string), state)
-                                    .putExtra(getString(R.string.intent_city_query_param_string), city);
-                }
-                else{
-                    // Query server for weather information of a single city
-                    Weather weather = WundergroundAPICallManager.requestWeather(state, city);
-                    if(weather == null)
-                        weatherResultIntent =
-                                new Intent(getString(R.string.intent_action_broadcast_weather_string))
-                                        .putExtra(getString(R.string.intent_intentservice_request_result_int), REQUEST_FAIL_UNKNOWN)
-                                        .putExtra(getString(R.string.intent_state_query_param_string), state)
-                                        .putExtra(getString(R.string.intent_city_query_param_string), city);
-                    else
-                        weatherResultIntent =
-                                new Intent(getString(R.string.intent_action_broadcast_weather_string))
-                                        .putExtra(getString(R.string.intent_intentservice_request_result_int), REQUEST_SUCCESS)
-                                        .putExtra(getString(R.string.intent_result_hour_int), weather.hour)
-                                        .putExtra(getString(R.string.intent_result_celsius_int), weather.tempCelsius)
-                                        .putExtra(getString(R.string.intent_result_fahrenheit_int), weather.tempFahrenheit)
-                                        .putExtra(getString(R.string.intent_result_condition_string), weather.condition)
-                                        .putExtra(getString(R.string.intent_result_icon_string), weather.icon)
-                                        .putExtra(getString(R.string.intent_state_query_param_string), state)
-                                        .putExtra(getString(R.string.intent_city_query_param_string), city);
-                }
-                LocalBroadcastManager.getInstance(this).sendBroadcast(weatherResultIntent);
-            } else if (action.equals(getString(R.string.intent_action_batch_string))) {
                 Intent weatherResultIntent;
                 if(!isOnline()){
                     // No connection
@@ -162,7 +85,15 @@ public class CheckWeatherIntentService extends IntentService {
                     for(String key: keyList){
                         // Loop through every city that we are monitoring and query their weather info.
                         String[] s = key.split(", ");
-                        Weather w = WundergroundAPICallManager.requestWeather(s[1], s[0]);
+                        HourlyApiRequest request = new HourlyApiRequest(s[1], s[0]);
+                        Weather w = null;
+
+                        try {
+                            w = request.loadDataFromNetwork();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
                         if(w!=null){
                             editor.putString(key+getString(R.string.preference_condition_string), w.condition);
                             editor.putInt(key + getString(R.string.preference_celsius_int), w.tempCelsius);
@@ -179,6 +110,8 @@ public class CheckWeatherIntentService extends IntentService {
                             }
 
                             editor.putString(key+getString(R.string.preference_icon_string), w.icon);
+
+                            if(DEBUG) Log.d(TAG, w.toKey()+" updated");
                         }
                     }
                     editor.commit();
@@ -191,7 +124,7 @@ public class CheckWeatherIntentService extends IntentService {
                         if(events.size() == 5)
                             inboxStyle.addLine("...");
 
-                        NotificationCompat.Builder mBuilder = getNotificationBuilder("Weather report", "Bad weather");
+                        NotificationCompat.Builder mBuilder = getNotificationBuilder();
                         mBuilder.setStyle(inboxStyle);
 
                         NotificationManager notificationManager =
@@ -199,6 +132,7 @@ public class CheckWeatherIntentService extends IntentService {
                         notificationManager.notify(1, mBuilder.build());
                     }
 
+                    if(DEBUG) Log.d(TAG, "batch update completed. sending broadcast...");
                     weatherResultIntent =
                             new Intent(getString(R.string.intent_action_broadcast_batch_string))
                                     .putExtra(getString(R.string.intent_intentservice_request_result_int), REQUEST_SUCCESS);
@@ -219,13 +153,10 @@ public class CheckWeatherIntentService extends IntentService {
         if(!badWeather.contains(future))
             return false;
 
-        if(goodWeather.contains(initial))
-            return true;
-        else
-            return false;
+        return goodWeather.contains(initial);
     }
 
-    private NotificationCompat.Builder getNotificationBuilder(String title, String content){
+    private NotificationCompat.Builder getNotificationBuilder(){
         // Creates an Intent for the Activity
         Intent intent = new Intent(this, CitySearchActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -239,12 +170,10 @@ public class CheckWeatherIntentService extends IntentService {
                         PendingIntent.FLAG_UPDATE_CURRENT
                 );
 
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
+        return new NotificationCompat.Builder(this)
                 .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle(title)
-                .setContentText(content)
+                .setContentTitle("Weather report")
+                .setContentText("Bad weather")
                 .setContentIntent(notifyIntent);
-
-        return mBuilder;
     }
 }

@@ -15,6 +15,10 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <service
+            android:name=".background.MySpiceService"
+            android:exported="false" />
+
+        <service
             android:name=".background.CheckWeatherIntentService"
             android:exported="false" />
 

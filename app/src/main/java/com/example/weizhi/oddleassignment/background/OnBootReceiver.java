@@ -17,6 +17,7 @@ import com.example.weizhi.oddleassignment.R;
  */
 public class OnBootReceiver extends BroadcastReceiver {
     private final String TAG = "OnBootReceiver";
+    private static final boolean DEBUG = false;
 
     public OnBootReceiver() {
     }
@@ -31,6 +32,7 @@ public class OnBootReceiver extends BroadcastReceiver {
             PendingIntent pi = PendingIntent.getService(context, 1, myIntent, PendingIntent.FLAG_CANCEL_CURRENT);
             alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() +
                     5000, AlarmManager.INTERVAL_HALF_HOUR , pi);
+            if(DEBUG) Log.d(TAG, "Received boot complete. Started alarmmanager.");
         }
     }
 }

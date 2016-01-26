@@ -23,7 +23,7 @@ import java.util.ArrayList;
  * @author Lin Weizhi (ecc.weizhi@gmail.com)
  */
 public class WeatherRecyclerViewAdapter extends RecyclerView.Adapter<WeatherRecyclerViewAdapter.ViewHolder> {
-    private final String TAG = "'WeatherRecyclerAdapter";
+    private final String TAG = "WeatherRecyclerAdapter";
     private ArrayList<Weather> weatherList;
     private final RecyclerFragmentInterface mFragment;
 
