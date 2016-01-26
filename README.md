@@ -3,13 +3,14 @@ A demo android app
 
 Note: In order for the API calls to work, you will need to supply your
 own API key in  to be used for Weather Underground API. Fill in the variable API_KEY at 
-[WundergroundAPICallManager.java]( app/src/main/java/com/example/weizhi/oddleassignment/network/WundergroundAPICallManager.java). 
+[HourlyApiRequest.java]( app/src/main/java/com/example/weizhi/oddleassignment/network/HourlyApiRequest.java). 
 
 See http://www.wunderground.com/weather/api/d/docs?d=index 
 
 The following abilities were demonstrated:
 - Making RESTFUL API calls to server.
-- Parsing XML using XmlPullParser class
+- Uses [RoboSpice](https://github.com/stephanenicolas/robospice) to perform network request.
+- Parsing JSON using [Gson](https://github.com/google/gson).
 - Using RecyclerView to display a list of items
 - Insert/remove items in RecyclerView
 - Using AlarmManager to perform operations repeatedly
